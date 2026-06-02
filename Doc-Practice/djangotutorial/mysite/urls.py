@@ -1,5 +1,5 @@
 """
-URL configuration for storeproject project.
+URL configuration for mysite project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.0/topics/http/urls/
@@ -16,10 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-import debug_toolbar
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('playground/', include('playground.urls')),
-    path('__debug__/', include(debug_toolbar.urls)),
+    path('polls/', include("polls.urls")),
 ]
