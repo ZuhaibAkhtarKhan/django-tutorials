@@ -6,6 +6,11 @@ from django.db.models import Q, F, Value, Func, ExpressionWrapper, DecimalField
 from django.db.models.aggregates import Count, Max, Min, Avg, Sum
 from django.db.models.functions import Concat
 
+# querying generic relations
+from django.contrib.contenttypes.models import ContentType
+from tags.models import TaggedItem
+# Product already imported
+
 def say_hello(request):
 
     # try:
@@ -125,8 +130,26 @@ def say_hello(request):
 
     # EXPRESSION WRAPPER
 
-    queryset = Product.objects.annotate(
-        discounted_price = ExpressionWrapper(F('unit_price') * 0.8, output_field=DecimalField())
-    )
+    # queryset = Product.objects.annotate(
+    #     discounted_price = ExpressionWrapper(F('unit_price') * 0.8, output_field=DecimalField())
+    # )
+
+
+    # Content Types (Generic relations)
+
+    # Get for model gives the content_object_id for the class in it 
+    # content_type = ContentType.objects.get_for_model(Product)
+
+    # queryset = TaggedItem.objects.select_related('tag').filter(
+    #     content_type = content_type,
+    #     object_id = 1
+    # )
+
+    # Custom methods
+    # Go to models.py where you wanna create
+    # created get_tag_for there
+
+    queryset = TaggedItem.objects.get_tags_for(Product, 1)
+
 
     return render(request, 'hello.html', {'name': 'Mosh', 'result': list(queryset)})
