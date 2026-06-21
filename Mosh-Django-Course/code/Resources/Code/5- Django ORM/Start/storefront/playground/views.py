@@ -2,8 +2,9 @@ from django.shortcuts import render
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from store.models import Product, Customer, Collection, Order, OrderItem
-from django.db.models import Q, F, Value
+from django.db.models import Q, F, Value, Func, ExpressionWrapper, DecimalField
 from django.db.models.aggregates import Count, Max, Min, Avg, Sum
+from django.db.models.functions import Concat
 
 def say_hello(request):
 
@@ -101,5 +102,31 @@ def say_hello(request):
 
     # queryset = Customer.objects.annotate(is_new=F('id')+1)
 
+
+    # queryset = Customer.objects.annotate(
+    #     # CONCAT
+    #     full_name = Func(F('first_name'),Value(' '), F('last_name'), function='CONCAT')
+    # )
+
+    # another method is to use concat function from django, we have to import it first
+
+
+    # queryset = Customer.objects.annotate(
+    #     # CONCAT USING DjNAGO FUNCTION
+    #     full_name = Concat('first_name',Value(' '), 'last_name')
+    #     # BENEFIT IS THAT WE DO NOT hAVE TO RAP IT IN AN F OBJECT BUt FOR A WHITE SPACE WE HAVE T WRAP IT INSIDE A VALUE OBJECT
+    # )
+
+    #GROUPING
+
+    # queryset = Customer.objects.annotate(
+    #     orders_count = Count('order')
+    # )
+
+    # EXPRESSION WRAPPER
+
+    queryset = Product.objects.annotate(
+        discounted_price = ExpressionWrapper(F('unit_price') * 0.8, output_field=DecimalField())
+    )
 
     return render(request, 'hello.html', {'name': 'Mosh', 'result': list(queryset)})
