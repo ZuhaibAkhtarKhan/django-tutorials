@@ -5,12 +5,15 @@ from store.models import Product, Customer, Collection, Order, OrderItem
 from django.db.models import Q, F, Value, Func, ExpressionWrapper, DecimalField
 from django.db.models.aggregates import Count, Max, Min, Avg, Sum
 from django.db.models.functions import Concat
+from django.db import transaction, connection
 
 # querying generic relations
 from django.contrib.contenttypes.models import ContentType
 from tags.models import TaggedItem
 # Product already imported
 
+
+# @transaction.atomic() # DEcorator # Anything in the wrap will be run when I run the say_hello function
 def say_hello(request):
 
     # try:
@@ -149,7 +152,78 @@ def say_hello(request):
     # Go to models.py where you wanna create
     # created get_tag_for there
 
-    queryset = TaggedItem.objects.get_tags_for(Product, 1)
+    # queryset = TaggedItem.objects.get_tags_for(Product, 1)
+
+
+    # Understanding QuerySet Cache
+
+    # CREATING OBJECTS
+
+    # collection = Collection() # WE can also do it inside teh brackets like Collection(collecion.title = 'Video Games') -> not recommended
+    # collection.title = 'Video Games'
+    # # collection.featured_product = Product(pk=1) # OR
+    # collection.featured_product_id = 1
+    # collection.save() # save the data
+    # # if id isn't typed, then it will make a new id and if id is types
+
+    # we can also like this
+    # collection = Collection.objects.create(title='a', featured_product_id = 1)
+
+
+    # UPDATING OBJECTS
+    # collection = Collection(pk=11)
+    # collection.title = 'Games'
+    # collection.featured_product = None
+    # collection.save()
+
+    # WE must mention all the fields set to something or we will get data loss.
+
+    # # we can also do
+    # collection = Collection.objects.get(pk=11)
+    # collection.featured_product = None
+    # collection.save()
+
+    # # also updating directly in teh database
+    # Collection.objects.filter(id = 11).update(featured_product= None) # filter is necessary else all the colums featured_product will be updated to None
+
+
+    # DELETING OBJECTS
+    # collection = Collection(pk=11)
+    # collection.delete()
+
+    # Collection.objects.filter(id__gt=10).delete()
+
+
+
+    # TRANSACTIONS
+
+    # with transaction.atomic():
+    #     order = Order()
+    #     order.customer_id = 1
+    #     order.save()
+
+    #     item = OrderItem()
+    #     item.order = order
+    #     item.product_id = 1
+    #     item.quantity = 1
+    #     item.unit_price = 10
+
+    #     item.save()
+
+
+    # Executing RAW SQL QUERIES
+    # queryset = Product.objects.raw('SELECT * FROM store_product') # In the select statement, the PK mus tbe included, else an error.
+    # # WE CANT DO FILTER METHOD ETC ON THIS queryset
+    #instead import connection on top and;
+    # cursor = connection.cursor()
+    # cursor.execute('')
+    # cursor.close()
+
+    # # we can do thi sas well so not to worry about closing
+    # with connection.cursor() as cursor:
+    #     cursor.execute('')
+
+    #     # cursor.callproc('get_customers', [1, 2, 'a']) # to call stored procedures
 
 
     return render(request, 'hello.html', {'name': 'Mosh', 'result': list(queryset)})
