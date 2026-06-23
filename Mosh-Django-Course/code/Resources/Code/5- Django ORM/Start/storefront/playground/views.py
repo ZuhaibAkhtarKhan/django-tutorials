@@ -225,5 +225,10 @@ def say_hello(request):
 
     #     # cursor.callproc('get_customers', [1, 2, 'a']) # to call stored procedures
 
+    # cursor = connection.cursor()
+    # cursor.execute('SELECT * FROM store_product')
+    # queryset = cursor.fetchall()
+    # cursor.close()
 
-    return render(request, 'hello.html', {'name': 'Mosh', 'result': list(queryset)})
+    
+    return render(request, 'hello.html', {'name': 'Zuhaib'})
