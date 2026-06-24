@@ -1,7 +1,36 @@
 from django.contrib import admin
 from . import models
-from django.utils.html import format_html
+from django.utils.html import format_html, urlencode
 from django.db.models import Count
+from django.urls import reverse
+
+
+# class InventoryFilter(admin.SimpleListFilter):
+#     title = 'Inventory'
+#     parameter_name = 'inventory' 
+
+#     def lookups(self, request, model_admin):
+#         return [
+#             ('<10', 'low')
+#         ]
+
+#     def queryset(self, request, queryset):
+#         if self.value() == '<10':
+#             return queryset.filter(inventory__lt=10)
+
+class InventoryFilter(admin.SimpleListFilter):
+    title = 'Inventory'
+    parameter_name = 'inventory'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('<10', 'low')
+        ]
+    
+    def queryset(self, request, queryset):
+        if self.value() == '<10':
+            return queryset.filter(inventory__lt=10)
+
 
 # customizing the list page
 # how we wanna view our Product in admin
@@ -14,6 +43,9 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ['unit_price']
     list_per_page = 10
     list_select_related = ['collection'] # To avoid extra queries
+
+    # adding filters # adding custom filter (making InventoryFilter class)
+    list_filter=['collection', 'last_update', InventoryFilter]
 
     # Adding computed fields/columns
     @admin.display(ordering='inventory') # used to set meta data properties on the function as if the user clicks this column header, sort the data using the inventory field
@@ -43,12 +75,49 @@ class OrderAdmin(admin.ModelAdmin):
 #     list_display  = ['title', 'unit_price']
 
 
+# @admin.register(models.Customer)
+# class CustomerAdmin(admin.ModelAdmin):
+#     list_display = ['first_name', 'last_name', 'membership', 'order_count']
+#     list_editable = ['membership']
+#     list_per_page = 10
+#     ordering = ['first_name', 'last_name'] # we can do ordering here as well instead of meta
+
+
+#     @admin.display(ordering='order_count')
+#     def order_count(self, customer):
+#         url = (reverse('admin:store_order_changelist') + '?' + urlencode({
+#             'customer__id':str(customer.id)
+#         }))
+#         return format_html('<a href="{}">{}</a>', url, customer.order_count)
+    
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).annotate(
+#             order_count = Count('order')
+#         )
+
+
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'membership']
+    list_display = ['first_name', 'last_name', 'membership', 'order_count']
     list_editable = ['membership']
     list_per_page = 10
-    ordering = ['first_name', 'last_name'] # we can do ordering here as well instead of meta
+    ordering=['first_name', 'last_name']
+    search_fields=['first_name__istartswith', 'last_name__istartswith']
+
+    @admin.display(ordering='order_count')
+    def order_count(self, customer):
+
+        # return customer.order_count
+        url = (reverse('admin:store_order_changelist') + '?' + urlencode({
+            'customer__id': str(customer.id)
+        }))
+        return format_html('<a href="{}" >{}</a>', url, customer.order_count )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            order_count = Count('order')
+        )
+    
 
 
 @admin.register(models.Collection)
@@ -58,7 +127,11 @@ class CollectionAdmin(admin.ModelAdmin):
     @admin.display(ordering='product_count')
     def product_count(self, collection):
         # return collection.product_count # WHICH DOESNT EXIST SO definging get_queryset(builtin fucntion but we have to customize)
-        return format_html('<a href="https://google.com"> {} </a>', collection.product_count)
+        # reverse('admin:app_model_page')
+        url = (reverse('admin:store_product_changelist') + '?' + urlencode({
+            'collection__id': str(collection.id)
+        }))
+        return format_html('<a href="{}"> {} </a>',url, collection.product_count)
         # return collection.product_count
         # now we will add a html link whenever we tap on the product_count to jump to the products
 
