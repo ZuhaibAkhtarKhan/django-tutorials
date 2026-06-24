@@ -3,6 +3,9 @@ from . import models
 from django.utils.html import format_html, urlencode
 from django.db.models import Count
 from django.urls import reverse
+# from tags.models import TaggedItem # now store_custom manages it
+
+# from django.contrib.contenttypes.admin import GenericTabularInline
 
 
 # class InventoryFilter(admin.SimpleListFilter):
@@ -35,6 +38,12 @@ class InventoryFilter(admin.SimpleListFilter):
             return queryset.filter(inventory__gt=10)
 
 
+# move this class to store_custom admin.py so that both the tags and store apps remain independent
+
+# class TagInline(GenericTabularInline):
+#     model = TaggedItem
+#     autocomplete_fields = ['tag']
+
 # customizing the list page
 # how we wanna view our Product in admin
 @admin.register(models.Product)
@@ -42,7 +51,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     # showing limited options for a field
     autocomplete_fields = ['collection']
-
+    # inlines = [TagInline] # Is now part of the Custom..... in store_custom admin.py
     #when we wanna show certain fields for adding a product
     # fields=['title', 'slug']
     # exclude=['unit_price'] # opposite of fields
@@ -66,6 +75,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     # adding filters # adding custom filter (making InventoryFilter class)
     list_filter=['collection', 'last_update', InventoryFilter]
+    search_fields=['title']
 
     # Adding computed fields/columns
     @admin.display(ordering='inventory') # used to set meta data properties on the function as if the user clicks this column header, sort the data using the inventory field
@@ -98,7 +108,12 @@ class ProductAdmin(admin.ModelAdmin):
             messages.SUCCESS
         )
 
-
+class OrderItemInline(admin.TabularInline): # Also try stackedinline for stacked disaply
+    autocomplete_fields=['product']
+    model = models.OrderItem
+    extra=0 # not to see extra rows
+    min_num = 1
+    max_num = 10
 
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -107,6 +122,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_select_related = ['customer']
 
     autocomplete_fields=['customer']
+    inlines = [OrderItemInline]
 
 
     # def customer_name(self, order):
