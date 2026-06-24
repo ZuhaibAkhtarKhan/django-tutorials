@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from . import models
 from django.utils.html import format_html, urlencode
 from django.db.models import Count
@@ -24,18 +24,36 @@ class InventoryFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return [
-            ('<10', 'low')
+            ('<10', 'low'),
+            ('>10', 'Ok')
         ]
     
     def queryset(self, request, queryset):
         if self.value() == '<10':
             return queryset.filter(inventory__lt=10)
+        else:
+            return queryset.filter(inventory__gt=10)
 
 
 # customizing the list page
 # how we wanna view our Product in admin
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
+
+    # showing limited options for a field
+    autocomplete_fields = ['collection']
+
+    #when we wanna show certain fields for adding a product
+    # fields=['title', 'slug']
+    # exclude=['unit_price'] # opposite of fields
+    # readonly_fields = ['title']
+
+    # PREPOPULATING SLUG FIELD
+    prepopulated_fields = {
+        'slug': ['title']
+    }
+
+
     # collection included to show related class Collection
     # as collection __str__ function is set to title, so we will be getting titles instead of Objext addresses, to get id etc still, deifne that method
     list_display  = ['title', 'unit_price', 'inventory_status', 'collection_title']
@@ -43,6 +61,8 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ['unit_price']
     list_per_page = 10
     list_select_related = ['collection'] # To avoid extra queries
+    #must be added
+    actions=['clear_inventory']
 
     # adding filters # adding custom filter (making InventoryFilter class)
     list_filter=['collection', 'last_update', InventoryFilter]
@@ -57,6 +77,27 @@ class ProductAdmin(admin.ModelAdmin):
     # method to get collection title or any other field
     def collection_title(self, product):
         return product.collection.title
+    
+
+    # Making custom actions 
+    # @admin.action(description='Clear Inventory')
+    # def clear_inventory(self, request, queryset):
+    #     updated_count = queryset.update(inventory=0)
+    #     self.message_user(
+    #         request,
+    #         f'{updated_count} inventories set to 0',
+    #         messages.SUCCESS
+    #     )
+
+    @admin.action(description='Clear inventory')
+    def clear_inventory(self, request, queryset):
+        updated_count = queryset.update(inventory=0)
+        self.message_user(
+            request,
+            f'{updated_count} records updated successfully',
+            messages.SUCCESS
+        )
+
 
 
 @admin.register(models.Order)
@@ -64,6 +105,8 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'placed_at', 'customer']
     list_per_page = 10
     list_select_related = ['customer']
+
+    autocomplete_fields=['customer']
 
 
     # def customer_name(self, order):
@@ -123,6 +166,9 @@ class CustomerAdmin(admin.ModelAdmin):
 @admin.register(models.Collection)
 class CollectionAdmin(admin.ModelAdmin):
     list_display = ['title', 'product_count']
+
+    # to be searhced through title in the pRoduct list page while drop down
+    search_fields= ['title']
 
     @admin.display(ordering='product_count')
     def product_count(self, collection):
