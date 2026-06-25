@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'store',
     'tags',
     'likes',
-    'store_custom'
+    'store_custom',
+
+    'rest_framework'
 ]
 
 MIDDLEWARE = [

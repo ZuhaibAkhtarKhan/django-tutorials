@@ -170,7 +170,7 @@ class CustomerAdmin(admin.ModelAdmin):
         url = (reverse('admin:store_order_changelist') + '?' + urlencode({
             'customer__id': str(customer.id)
         }))
-        return format_html('<a href="{}" >{}</a>', url, customer.order_count )
+        return format_html('<a href="{}" >{}</a>', url, str(customer.order_count) + ' Product(s)' )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
