@@ -2,11 +2,15 @@ from rest_framework import serializers
 from decimal import Decimal
 from store.models import Product, Collection
 
-
 class CollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
-        fields = ['id', 'title']
+        fields = ['id', 'title', 'products_count']
+
+    products_count = serializers.SerializerMethodField(method_name='calculate_products')
+
+    def calculate_products(self, collection):
+        return collection.products.count()
 
 
 # serializers converts models to dict and then dict will be converted to JSON by render fucntion
@@ -20,7 +24,7 @@ class ProductSerializer(serializers.ModelSerializer):
     #
     class Meta:
         model = Product
-        fields = ['id', 'title', 'unit_price', 'collection','price_with_tax' ]
+        fields = ['id', 'title','description','slug', 'inventory', 'unit_price', 'collection','price_with_tax' ]
         # fields = '__all__' but bad practice, cuz sensitive info may be exposed
 
 
@@ -53,3 +57,24 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def calculate_tax(self, product):
         return (product.unit_price) * Decimal(1.1)
+    
+    # overriding teh validator method of serializer
+    # just an example
+    # def validate(self, data):
+    #     if data['password'] != data['confirm_password']:
+    #         return serializers.ValidationError('Passwords do not match')
+    #     return data
+
+
+
+    # customizing how a product is created (overriding create method)
+    # def create(self, validated_data):
+    #     product = Product(**validated_data)
+    #     product.other = 1 # customizing any other field in it
+    #     product.save()
+    #     return product
+    
+    # def update(self, instance, validated_data): # instance -> product object
+    #     instance.unit_price = validated_data.get('unit_price')
+    #     instance.save()
+    #     return instance

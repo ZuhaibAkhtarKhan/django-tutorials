@@ -199,7 +199,7 @@ class CollectionAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            product_count = Count('product')
+            product_count = Count('products')
         )
     # the default query to be returned is added with the annotate method
 
