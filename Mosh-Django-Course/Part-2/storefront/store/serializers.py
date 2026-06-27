@@ -6,12 +6,7 @@ class CollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
         fields = ['id', 'title', 'products_count']
-
-    products_count = serializers.SerializerMethodField(method_name='calculate_products')
-
-    def calculate_products(self, collection):
-        return collection.products.count()
-
+    products_count = serializers.IntegerField(read_only=True)
 
 # serializers converts models to dict and then dict will be converted to JSON by render fucntion
 class ProductSerializer(serializers.ModelSerializer):
