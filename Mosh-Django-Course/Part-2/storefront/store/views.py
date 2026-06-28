@@ -8,8 +8,8 @@ from rest_framework import status
 # from rest_framework.mixins import ListModelMixin, CreateModelMixin
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
-from .models import Product, Collection
-from .serializers import ProductSerializer, CollectionSerializer
+from .models import Product, Collection, OrderItem, Review
+from .serializers import ProductSerializer, CollectionSerializer, ReviewSerializer
 from django.db.models import Count
 
 # Class based views
@@ -201,7 +201,7 @@ from django.db.models import Count
 
 
 # lets lessen the code even more
-
+# but for them, we will have to make routers in urls.py
 class ProductViewSet(ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -209,12 +209,19 @@ class ProductViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {'request':self.request}
     
-    def delete(self, request, pk):
-        product = get_object_or_404(Product, id=pk)
-        if product.orderitems.count() > 0:
+    # for this ViewSet setting, delete is actually destroy internally, so we shoudl override destroy
+
+    # def delete(self, request, pk):
+    #     product = get_object_or_404(Product, id=pk)
+    #     if product.orderitems.count() > 0:
+    #         return Response({'error': 'Product cannot be deleted because its associated with a OrderItem'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    #     product.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def destroy(self, request, *args, **kwargs):
+        if OrderItem.objects.filter(product_id = kwargs['pk']).count() > 0:
             return Response({'error': 'Product cannot be deleted because its associated with a OrderItem'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return super().destroy(request, *args, **kwargs)
     
 # we also have just ReadOnlyModelViewSet to just enable read only operations
 class CollectionViewSet(ModelViewSet):
@@ -224,10 +231,19 @@ class CollectionViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {'request':self.request}
     
-    def delete(self, request, pk):
-        collection = get_object_or_404(Collection, id = pk)
-        if collection.products.count() > 0:
-            return Response({'error': 'Cannot delete the collection as it is associated with other products'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        collection.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    # def delete(self, request, pk):
+    #     collection = get_object_or_404(Collection, id = pk)
+    #     if collection.products.count() > 0:
+    #         return Response({'error': 'Cannot delete the collection as it is associated with other products'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    #     collection.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def destroy(self, request, *args, **kwargs):
+        if Product.objects.filter(collection_id= kwargs['pk']).count() > 0:
+            return Response({'error': 'Cannot delete the collection as it is associated with other products'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().destroy(request, *args, **kwargs)
+
+
+class ReviewViewSet(ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
